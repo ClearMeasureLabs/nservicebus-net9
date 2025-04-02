@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Events\**" />
+      <EmbeddedResource Remove="Events\**" />
+      <None Remove="Events\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NServiceBus" Version="9.*" />
+    </ItemGroup>
+
+</Project>

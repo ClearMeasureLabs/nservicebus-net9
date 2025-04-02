@@ -1,0 +1,9 @@
+﻿@API_HostAddress = http://localhost:5208
+
+GET {{API_HostAddress}}/
+
+###
+
+POST {{API_HostAddress}}/
+
+###
