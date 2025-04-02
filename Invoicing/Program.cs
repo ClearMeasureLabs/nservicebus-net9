@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -25,15 +26,21 @@ internal class Program
 
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
             })
-            .UseNServiceBus(x =>
+            .UseNServiceBus(hostBuilderContext =>
             {
+                var transportConnectionString = hostBuilderContext.Configuration.GetConnectionString("Transport");
+                SqlHelper.EnsureDatabaseExists(transportConnectionString);
+                SqlHelper.CreateSchema(transportConnectionString, Endpoints.Invoicing.Schema);
+
+                var persistenceConnectionString = hostBuilderContext.Configuration.GetConnectionString("Persistence");
+                SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
+                SqlHelper.CreateSchema(persistenceConnectionString, Endpoints.Invoicing.Schema);
+
                 var endpointConfiguration = new EndpointConfiguration(Endpoints.Invoicing.EndpointName);
                 endpointConfiguration.EnableInstallers();
                 endpointConfiguration.SendFailedMessagesTo("error");
 
-                const string connectionString = @"Data Source=(localdb)\mssqllocaldb;Database=NServiceBusDemo;Trusted_Connection=True;MultipleActiveResultSets=true";
-
-                var transport = new SqlServerTransport(connectionString)
+                var transport = new SqlServerTransport(transportConnectionString)
                 {
                     DefaultSchema = Endpoints.Invoicing.Schema,
                     TransportTransactionMode = TransportTransactionMode.ReceiveOnly
@@ -44,7 +51,7 @@ internal class Program
                 endpointConfiguration.UseTransport(transport);
 
                 var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
-                persistence.ConnectionBuilder(connectionBuilder: () => new SqlConnection(connectionString));
+                persistence.ConnectionBuilder(() => new SqlConnection(persistenceConnectionString));
 
                 var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
                 dialect.Schema(Endpoints.Invoicing.Schema);
@@ -58,8 +65,6 @@ internal class Program
                 endpointConfiguration.EnableOutbox();
 
                 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
-
-                SqlHelper.CreateSchema(connectionString, Endpoints.Invoicing.Schema);
                 return endpointConfiguration;
             });
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Shared;
 
@@ -27,7 +27,7 @@ if not exists (select  *
         ExecuteSql(connectionString, sql);
     }
 
-    private static void EnsureDatabaseExists(string connectionString)
+    public static void EnsureDatabaseExists(string connectionString)
     {
         var builder = new SqlConnectionStringBuilder(connectionString);
         var database = builder.InitialCatalog;

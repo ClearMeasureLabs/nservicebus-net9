@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -27,15 +28,22 @@ internal class Program
 
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
             })
-            .UseNServiceBus(x =>
+            .UseNServiceBus(hostBuilderContext =>
             {
-                const string connectionString = @"Data Source=(localdb)\mssqllocaldb;Database=NServiceBusDemo;Trusted_Connection=True;MultipleActiveResultSets=true";
+                var transportConnectionString = hostBuilderContext.Configuration.GetConnectionString("Transport");
+                SqlHelper.EnsureDatabaseExists(transportConnectionString);
+                SqlHelper.CreateSchema(transportConnectionString, Endpoints.Orders.Schema);
+
+                var persistenceConnectionString = hostBuilderContext.Configuration.GetConnectionString("Persistence");
+                SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
+                SqlHelper.CreateSchema(persistenceConnectionString, Endpoints.Orders.Schema);
+                SqlHelper.ExecuteSql(persistenceConnectionString, File.ReadAllText("Startup.sql"));
 
                 var endpointConfiguration = new EndpointConfiguration(Endpoints.Orders.EndpointName);
                 endpointConfiguration.EnableInstallers();
                 endpointConfiguration.SendFailedMessagesTo("error");
 
-                var transport = new SqlServerTransport(connectionString)
+                var transport = new SqlServerTransport(hostBuilderContext.Configuration.GetConnectionString("Transport"))
                 {
                     DefaultSchema = Endpoints.Orders.Schema,
                     TransportTransactionMode = TransportTransactionMode.ReceiveOnly
@@ -46,7 +54,7 @@ internal class Program
                 endpointConfiguration.UseTransport(transport);
 
                 var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
-                persistence.ConnectionBuilder(() => new SqlConnection(connectionString));
+                persistence.ConnectionBuilder(() => new SqlConnection(persistenceConnectionString));
 
                 var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
                 dialect.Schema(Endpoints.Orders.Schema);
@@ -60,10 +68,6 @@ internal class Program
                 endpointConfiguration.EnableOutbox();
 
                 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
-
-                // Create application tables
-                SqlHelper.CreateSchema(connectionString, Endpoints.Orders.Schema);
-                SqlHelper.ExecuteSql(connectionString, File.ReadAllText("Startup.sql"));
 
                 return endpointConfiguration;
             });
