@@ -1,14 +1,16 @@
-﻿using Microsoft.Data.SqlClient;
+using System;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using NServiceBus;
 using NServiceBus.Transport.SqlServer;
 using Shared;
-using System;
-using System.Threading.Tasks;
 
 namespace Invoicing;
 
-class Program
+internal class Program
 {
     public static async Task Main(string[] args)
     {
@@ -17,6 +19,12 @@ class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .ConfigureServices((hostBuilderContext, services) =>
+            {
+                Console.Title = AppDomain.CurrentDomain.FriendlyName;
+
+                services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
+            })
             .UseNServiceBus(x =>
             {
                 var endpointConfiguration = new EndpointConfiguration(Endpoints.Invoicing.EndpointName);
@@ -52,7 +60,6 @@ class Program
                 endpointConfiguration.UseSerialization<SystemJsonSerializer>();
 
                 SqlHelper.CreateSchema(connectionString, Endpoints.Invoicing.Schema);
-                Console.WriteLine("Press enter to send a message");
                 return endpointConfiguration;
             });
 }

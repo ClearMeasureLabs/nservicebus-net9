@@ -1,6 +1,6 @@
 namespace API.Model;
 
-internal class SubmitOrderRequest
+public class SubmitOrderRequest
 {
     public required string OrderNumber { get; set; }
     public required string ProductCode { get; set; }

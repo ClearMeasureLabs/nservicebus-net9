@@ -1,15 +1,17 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Hosting;
-using NServiceBus;
-using NServiceBus.Transport.SqlServer;
-using Shared;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NServiceBus;
+using NServiceBus.Transport.SqlServer;
+using Shared;
 
 namespace Orders;
 
-class Program
+internal class Program
 {
 
     public static async Task Main(string[] args)
@@ -19,13 +21,14 @@ class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostContext, services) =>
+            .ConfigureServices((hostBuilderContext, services) =>
             {
-                Console.Title = "Server";
-            }).UseNServiceBus(x =>
-            {
-                Console.Title = Endpoints.Orders.EndpointName;
+                Console.Title = AppDomain.CurrentDomain.FriendlyName;
 
+                services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
+            })
+            .UseNServiceBus(x =>
+            {
                 const string connectionString = @"Data Source=(localdb)\mssqllocaldb;Database=NServiceBusDemo;Trusted_Connection=True;MultipleActiveResultSets=true";
 
                 var endpointConfiguration = new EndpointConfiguration(Endpoints.Orders.EndpointName);
@@ -40,8 +43,7 @@ class Program
                 transport.SchemaAndCatalog.UseSchemaForQueue("error", "dbo");
                 transport.SchemaAndCatalog.UseSchemaForQueue("audit", "dbo");
 
-                var routing = endpointConfiguration.UseTransport(transport);
-                routing.UseSchemaForEndpoint(Endpoints.OrdersApi.EndpointName, Endpoints.OrdersApi.Schema);
+                endpointConfiguration.UseTransport(transport);
 
                 var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
                 persistence.ConnectionBuilder(() => new SqlConnection(connectionString));

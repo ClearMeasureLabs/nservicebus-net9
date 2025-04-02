@@ -1,9 +1,9 @@
-﻿using Messages;
+using System;
+using System.Threading.Tasks;
+using Messages;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
-using System;
-using System.Threading.Tasks;
 
 namespace Orders.Handlers;
 
@@ -23,8 +23,8 @@ public class OrderSubmittedHandler : IHandleMessages<OrderSubmitted>
         var session = context.SynchronizedStorageSession.SqlPersistenceSession();
 
         const string sql = """
-                           insert into orders.Order (Id, OrderNumber, ProductCode, Quantity, VendorName)
-                           values (@Id, @OrderNumber, @ProductCode, @Quantity, @VendorName)
+                           insert into [orders].[Order] (Id, OrderNumber, ProductCode, Quantity, VendorName, Status)
+                           values (@Id, @OrderNumber, @ProductCode, @Quantity, @VendorName, @Status)
                            """;
 
         await using var command = new SqlCommand(

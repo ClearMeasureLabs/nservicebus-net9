@@ -13,6 +13,7 @@
     <PackageReference Include="NServiceBus.Persistence.Sql" Version="8.*" />
     <PackageReference Include="NServiceBus.Transport.SqlServer" Version="8.*" />
     <PackageReference Include="NServiceBus.Extensions.Hosting" Version="3.0.1" />
+    <PackageReference Include="Seq.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Startup.sql" CopyToOutputDirectory="PreserveNewest" />

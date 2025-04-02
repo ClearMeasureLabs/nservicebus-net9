@@ -1,10 +1,10 @@
-﻿using Messages;
+using System;
+using System.Threading.Tasks;
+using Messages;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using NServiceBus.Persistence.Sql;
 using Orders.Messages;
-using System;
-using System.Threading.Tasks;
 
 namespace Orders.Sagas;
 
@@ -26,6 +26,8 @@ public class OrderExpirySaga : SqlSaga<OrderExpirySaga.SagaData>,
     protected override void ConfigureMapping(IMessagePropertyMapper mapper)
     {
         mapper.ConfigureMapping<OrderSubmitted>(msg => msg.OrderNumber);
+        mapper.ConfigureMapping<OrderAccepted>(msg => msg.OrderNumber);
+        mapper.ConfigureMapping<OrderExpired>(msg => msg.OrderNumber);
     }
 
     protected override string CorrelationPropertyName => nameof(SagaData.OrderNumber);
@@ -51,7 +53,7 @@ public class OrderExpirySaga : SqlSaga<OrderExpirySaga.SagaData>,
 
     public Task Handle(OrderAccepted message, IMessageHandlerContext context)
     {
-        _logger.LogInformation("Order {OrderNumber} as been Accepted. Completing saga.", message.OrderNumber);
+        _logger.LogInformation("Order {OrderNumber} has been Accepted. Completing saga.", message.OrderNumber);
 
         MarkAsComplete();
 
@@ -60,7 +62,7 @@ public class OrderExpirySaga : SqlSaga<OrderExpirySaga.SagaData>,
 
     public Task Handle(OrderExpired message, IMessageHandlerContext context)
     {
-        _logger.LogInformation("Order {OrderNumber} as Expired. Completing saga.", message.OrderNumber);
+        _logger.LogInformation("Order {OrderNumber} has Expired. Completing saga.", message.OrderNumber);
 
         MarkAsComplete();
 
