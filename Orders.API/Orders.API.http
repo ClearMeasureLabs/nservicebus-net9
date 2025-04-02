@@ -1,6 +1,6 @@
 @API_HostAddress = http://localhost:5208
 
-
+// @name SubmitOrder
 POST {{API_HostAddress}}/orders
 Content-Type: application/json
 
@@ -12,3 +12,16 @@ Content-Type: application/json
 }
 
 ###
+
+// @name GetSubmittedOrder
+GET {{SubmitOrder.response.headers.Location}}
+
+###
+
+// @name ApproveSubmittedOrder
+POST {{SubmitOrder.response.headers.Location}}/approve
+Content-Type: application/json
+
+{
+    "approvedBy":"Mike Sigsworth"
+}

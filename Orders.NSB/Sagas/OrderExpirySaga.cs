@@ -10,7 +10,7 @@ namespace Orders.Sagas;
 
 public class OrderExpirySaga : SqlSaga<OrderExpirySaga.SagaData>,
     IAmStartedByMessages<OrderSubmitted>,
-    IHandleMessages<OrderAccepted>,
+    IHandleMessages<OrderApproved>,
     IHandleMessages<OrderExpired>,
     IHandleTimeouts<OrderExpirationTimeout>
 {
@@ -26,7 +26,7 @@ public class OrderExpirySaga : SqlSaga<OrderExpirySaga.SagaData>,
     protected override void ConfigureMapping(IMessagePropertyMapper mapper)
     {
         mapper.ConfigureMapping<OrderSubmitted>(msg => msg.OrderNumber);
-        mapper.ConfigureMapping<OrderAccepted>(msg => msg.OrderNumber);
+        mapper.ConfigureMapping<OrderApproved>(msg => msg.OrderNumber);
         mapper.ConfigureMapping<OrderExpired>(msg => msg.OrderNumber);
     }
 
@@ -51,7 +51,7 @@ public class OrderExpirySaga : SqlSaga<OrderExpirySaga.SagaData>,
         await context.SendLocal(message);
     }
 
-    public Task Handle(OrderAccepted message, IMessageHandlerContext context)
+    public Task Handle(OrderApproved message, IMessageHandlerContext context)
     {
         _logger.LogInformation("Order {OrderNumber} has been Accepted. Completing saga.", message.OrderNumber);
 

@@ -6,11 +6,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Invoicing.NSB", "Invoicing.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Orders.NSB", "Orders.NSB\Orders.NSB.csproj", "{1EEC6A8C-DB3C-4F20-93CE-5004BF16AD7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedKernel", "SharedKernel\SharedKernel.csproj", "{BF92D39E-42F6-44E9-8F7F-819993235621}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Orders.API", "Orders.API\Orders.API.csproj", "{F49CF16F-1071-4B1A-BB12-C51C296B6B1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedMessages", "SharedMessages\SharedMessages.csproj", "{1929D231-4094-4C28-A5B7-B92148013046}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{22F72E50-B86A-48A6-4252-6FDC98C636E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Messages", "Shared.Messages\Shared.Messages.csproj", "{2A03E161-E63A-77AA-30B4-460DEDE3C87F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,12 +21,12 @@ Global
 		{B58159EB-9EFD-443F-A80E-8C90B0AF1907}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EEC6A8C-DB3C-4F20-93CE-5004BF16AD7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1EEC6A8C-DB3C-4F20-93CE-5004BF16AD7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BF92D39E-42F6-44E9-8F7F-819993235621}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BF92D39E-42F6-44E9-8F7F-819993235621}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F49CF16F-1071-4B1A-BB12-C51C296B6B1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F49CF16F-1071-4B1A-BB12-C51C296B6B1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1929D231-4094-4C28-A5B7-B92148013046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1929D231-4094-4C28-A5B7-B92148013046}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22F72E50-B86A-48A6-4252-6FDC98C636E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22F72E50-B86A-48A6-4252-6FDC98C636E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A03E161-E63A-77AA-30B4-460DEDE3C87F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A03E161-E63A-77AA-30B4-460DEDE3C87F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

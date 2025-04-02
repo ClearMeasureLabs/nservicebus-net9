@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Orders.Handlers;
 
-public class OrderAcceptedHandler : IHandleMessages<OrderAccepted>
+public class OrderAcceptedHandler : IHandleMessages<OrderApproved>
 {
     private readonly ILogger<OrderAcceptedHandler> _logger;
 
@@ -15,7 +15,7 @@ public class OrderAcceptedHandler : IHandleMessages<OrderAccepted>
         _logger = logger;
     }
 
-    public async Task Handle(OrderAccepted message, IMessageHandlerContext context)
+    public async Task Handle(OrderApproved message, IMessageHandlerContext context)
     {
         _logger.LogInformation("Updating Order {OrderNumber} in database with Status = Accepted.", message.OrderNumber);
 

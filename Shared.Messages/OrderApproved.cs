@@ -1,6 +1,6 @@
 ﻿namespace Messages;
 
-public class OrderAccepted : IEvent
+public class OrderApproved : IEvent
 {
     public required string OrderNumber { get; set; }
 }

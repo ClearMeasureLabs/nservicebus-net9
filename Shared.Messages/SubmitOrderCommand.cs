@@ -1,6 +1,6 @@
-namespace API.Model;
+namespace Shared.Messages;
 
-public class SubmitOrderRequest
+public class SubmitOrderCommand
 {
     public required string OrderNumber { get; set; }
     public required string ProductCode { get; set; }

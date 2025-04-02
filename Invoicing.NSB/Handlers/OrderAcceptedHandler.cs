@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Invoicing.Handlers;
 
-public class OrderAcceptedHandler : IHandleMessages<OrderAccepted>
+public class OrderAcceptedHandler : IHandleMessages<OrderApproved>
 {
     private readonly ILogger<OrderAcceptedHandler> logger;
 
@@ -14,7 +14,7 @@ public class OrderAcceptedHandler : IHandleMessages<OrderAccepted>
         this.logger = logger;
     }
 
-    public Task Handle(OrderAccepted message, IMessageHandlerContext context)
+    public Task Handle(OrderApproved message, IMessageHandlerContext context)
     {
         logger.LogInformation("Creating invoice for Accepted Order {OrderNumber}.", message.OrderNumber);
 
