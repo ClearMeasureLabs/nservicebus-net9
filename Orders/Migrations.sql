@@ -1,4 +1,4 @@
-﻿if object_id('[orders].[Order]', 'U') is null
+if object_id('[orders].[Order]', 'U') is null
     create table [orders].[Order] (
         Id uniqueidentifier not null primary key,
         Status nvarchar(50) not null,

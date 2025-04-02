@@ -8,13 +8,13 @@
 
         public sealed class Endpoint
         {
-            internal Endpoint(string endpointName, string schema)
+            internal Endpoint(string name, string schema)
             {
-                EndpointName = endpointName;
+                Name = name;
                 Schema = schema;
             }
 
-            public string EndpointName { get; }
+            public string Name { get; }
             public string Schema { get; }
         }
     }

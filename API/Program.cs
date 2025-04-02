@@ -4,66 +4,85 @@ using Microsoft.Data.SqlClient;
 using NServiceBus.Transport.SqlServer;
 using Shared;
 
-Console.Title = AppDomain.CurrentDomain.FriendlyName;
-
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
-builder.Services.AddTransient<IOrderService, OrderService>();
-
-#region NService Configuration
-
-var transportConnectionString = builder.Configuration.GetConnectionString("Transport");
-SqlHelper.EnsureDatabaseExists(transportConnectionString);
-SqlHelper.CreateSchema(transportConnectionString, Endpoints.OrdersApi.Schema);
-
-var persistenceConnectionString = builder.Configuration.GetConnectionString("Persistence");
-SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
-SqlHelper.CreateSchema(persistenceConnectionString, Endpoints.OrdersApi.Schema);
-
-var endpointConfiguration = new EndpointConfiguration(Endpoints.OrdersApi.EndpointName);
-endpointConfiguration.SendOnly();
-endpointConfiguration.EnableInstallers();
-endpointConfiguration.SendFailedMessagesTo("error");
-
-var transport = new SqlServerTransport(transportConnectionString)
+internal class Program
 {
-    DefaultSchema = Endpoints.OrdersApi.Schema,
-    TransportTransactionMode = TransportTransactionMode.ReceiveOnly
-};
-transport.SchemaAndCatalog.UseSchemaForQueue("error", "dbo");
-transport.SchemaAndCatalog.UseSchemaForQueue("audit", "dbo");
+    public static void Main(string[] args)
+    {
+        Console.Title = AppDomain.CurrentDomain.FriendlyName;
 
-endpointConfiguration.UseTransport(transport);
+        var builder = WebApplication.CreateBuilder(args);
 
-var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
-persistence.ConnectionBuilder(() => new SqlConnection(persistenceConnectionString));
+        ConfigureServices(builder);
+        ConfigureNServiceBus(builder);
 
-var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
-dialect.Schema(Endpoints.OrdersApi.Schema);
-persistence.TablePrefix("");
+        var app = builder.Build();
+        ConfigureRouting(app);
 
-transport.Subscriptions.DisableCaching = true;
-transport.Subscriptions.SubscriptionTableName = new SubscriptionTableName(
-    table: "Subscriptions",
-    schema: "dbo");
+        app.Run();
+    }
 
-endpointConfiguration.EnableOutbox();
+    private static void ConfigureServices(WebApplicationBuilder builder)
+    {
+        builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
+        builder.Services.AddTransient<IOrderService, OrderService>();
+    }
 
-endpointConfiguration.UseSerialization<SystemJsonSerializer>();
+    private static void ConfigureNServiceBus(WebApplicationBuilder builder)
+    {
+        var thisEndpoint = Endpoints.OrdersApi;
+        var endpointConfiguration = new EndpointConfiguration(thisEndpoint.Name);
 
-builder.UseNServiceBus(endpointConfiguration);
+        endpointConfiguration.SendOnly();
+        endpointConfiguration.EnableInstallers();
+        endpointConfiguration.SendFailedMessagesTo("error");
+        endpointConfiguration.EnableOutbox();
+        endpointConfiguration.UseSerialization<SystemJsonSerializer>();
 
-#endregion
+        // Configure Transport
+        var transportConnectionString = builder.Configuration.GetConnectionString("Transport");
+        SqlHelper.EnsureDatabaseExists(transportConnectionString);
+        SqlHelper.CreateSchema(transportConnectionString, thisEndpoint.Schema);
 
-var app = builder.Build();
+        var transport = new SqlServerTransport(transportConnectionString)
+        {
+            DefaultSchema = thisEndpoint.Schema,
+            TransportTransactionMode = TransportTransactionMode.ReceiveOnly
+        };
 
-app.MapGet("/orders/{orderNumber:alpha}",
-    (string orderNumber) => $"Details for order {orderNumber}");
+        transport.SchemaAndCatalog.UseSchemaForQueue("error", "dbo");
+        transport.SchemaAndCatalog.UseSchemaForQueue("audit", "dbo");
 
-app.MapPost("/orders",
-    (SubmitOrderRequest request, IOrderService orderService) => orderService.SubmitOrder(request));
+        transport.Subscriptions.DisableCaching = true;
+        transport.Subscriptions.SubscriptionTableName = new SubscriptionTableName(
+            table: "Subscriptions",
+            schema: "dbo");
 
-app.MapPost("/orders/{orderNumber:alpha}/accept",
-    (string orderNumber, IOrderService orderService) => orderService.AcceptOrder(orderNumber));
+        endpointConfiguration.UseTransport(transport);
 
-app.Run();
+        // Configure Persistence
+        var persistenceConnectionString = builder.Configuration.GetConnectionString("Persistence");
+        SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
+        SqlHelper.CreateSchema(persistenceConnectionString, thisEndpoint.Schema);
+
+        var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
+        persistence.ConnectionBuilder(() => new SqlConnection(persistenceConnectionString));
+
+        var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
+        dialect.Schema(thisEndpoint.Schema);
+        persistence.TablePrefix("");
+
+        builder.UseNServiceBus(endpointConfiguration);
+    }
+
+    private static void ConfigureRouting(WebApplication app)
+    {
+        app.MapGet("/orders/{orderNumber:alpha}",
+            (string orderNumber) => $"Details for order {orderNumber}");
+
+        app.MapPost("/orders",
+            (SubmitOrderRequest request, IOrderService orderService) => orderService.SubmitOrder(request));
+
+        app.MapPost("/orders/{orderNumber:alpha}/accept",
+            (string orderNumber, IOrderService orderService) => orderService.AcceptOrder(orderNumber));
+    }
+}

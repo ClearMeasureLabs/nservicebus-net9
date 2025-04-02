@@ -17,33 +17,32 @@ internal class Program
 
     public static async Task Main(string[] args)
     {
+        Console.Title = AppDomain.CurrentDomain.FriendlyName;
+
         await CreateHostBuilder(args).Build().RunAsync();
     }
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
+    private static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
             .ConfigureServices((hostBuilderContext, services) =>
             {
-                Console.Title = AppDomain.CurrentDomain.FriendlyName;
-
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
+                SqlHelper.ExecuteSql(hostBuilderContext.Configuration.GetConnectionString("Persistence"), File.ReadAllText("Migrations.sql"));
             })
             .UseNServiceBus(hostBuilderContext =>
             {
+                var endpointConfiguration = new EndpointConfiguration(Endpoints.Orders.Name);
+                endpointConfiguration.EnableInstallers();
+                endpointConfiguration.SendFailedMessagesTo("error");
+                endpointConfiguration.EnableOutbox();
+                endpointConfiguration.UseSerialization<SystemJsonSerializer>();
+
+                // Configure Transport
                 var transportConnectionString = hostBuilderContext.Configuration.GetConnectionString("Transport");
                 SqlHelper.EnsureDatabaseExists(transportConnectionString);
                 SqlHelper.CreateSchema(transportConnectionString, Endpoints.Orders.Schema);
 
-                var persistenceConnectionString = hostBuilderContext.Configuration.GetConnectionString("Persistence");
-                SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
-                SqlHelper.CreateSchema(persistenceConnectionString, Endpoints.Orders.Schema);
-                SqlHelper.ExecuteSql(persistenceConnectionString, File.ReadAllText("Startup.sql"));
-
-                var endpointConfiguration = new EndpointConfiguration(Endpoints.Orders.EndpointName);
-                endpointConfiguration.EnableInstallers();
-                endpointConfiguration.SendFailedMessagesTo("error");
-
-                var transport = new SqlServerTransport(hostBuilderContext.Configuration.GetConnectionString("Transport"))
+                var transport = new SqlServerTransport(transportConnectionString)
                 {
                     DefaultSchema = Endpoints.Orders.Schema,
                     TransportTransactionMode = TransportTransactionMode.ReceiveOnly
@@ -51,7 +50,17 @@ internal class Program
                 transport.SchemaAndCatalog.UseSchemaForQueue("error", "dbo");
                 transport.SchemaAndCatalog.UseSchemaForQueue("audit", "dbo");
 
+                transport.Subscriptions.DisableCaching = true;
+                transport.Subscriptions.SubscriptionTableName = new SubscriptionTableName(
+                    table: "Subscriptions",
+                    schema: "dbo");
+
                 endpointConfiguration.UseTransport(transport);
+
+                // Configure Persistence
+                var persistenceConnectionString = hostBuilderContext.Configuration.GetConnectionString("Persistence");
+                SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
+                SqlHelper.CreateSchema(persistenceConnectionString, Endpoints.Orders.Schema);
 
                 var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
                 persistence.ConnectionBuilder(() => new SqlConnection(persistenceConnectionString));
@@ -59,15 +68,6 @@ internal class Program
                 var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
                 dialect.Schema(Endpoints.Orders.Schema);
                 persistence.TablePrefix("");
-
-                transport.Subscriptions.DisableCaching = true;
-                transport.Subscriptions.SubscriptionTableName = new SubscriptionTableName(
-                    table: "Subscriptions",
-                    schema: "dbo");
-
-                endpointConfiguration.EnableOutbox();
-
-                endpointConfiguration.UseSerialization<SystemJsonSerializer>();
 
                 return endpointConfiguration;
             });
