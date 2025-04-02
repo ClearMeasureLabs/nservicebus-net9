@@ -9,6 +9,7 @@ internal class Program
     public static void Main(string[] args)
     {
         Console.Title = AppDomain.CurrentDomain.FriendlyName;
+        Console.WriteLine($"{AppDomain.CurrentDomain.FriendlyName} starting...");
 
         var builder = WebApplication.CreateBuilder(args);
 

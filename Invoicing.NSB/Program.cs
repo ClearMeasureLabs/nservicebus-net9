@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -10,16 +9,16 @@ using NServiceBus;
 using NServiceBus.Transport.SqlServer;
 using Shared;
 
-namespace Orders;
+namespace Invoicing;
 
 internal class Program
 {
-
     public static async Task Main(string[] args)
     {
         Console.Title = AppDomain.CurrentDomain.FriendlyName;
+        Console.WriteLine($"{AppDomain.CurrentDomain.FriendlyName} starting...");
 
-        await CreateHostBuilder(args).Build().RunAsync();
+        await CreateHostBuilder(args).RunConsoleAsync();
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -27,11 +26,11 @@ internal class Program
             .ConfigureServices((hostBuilderContext, services) =>
             {
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSeq());
-                SqlHelper.ExecuteSql(hostBuilderContext.Configuration.GetConnectionString("Persistence"), File.ReadAllText("Migrations.sql"));
             })
             .UseNServiceBus(hostBuilderContext =>
             {
-                var endpointConfiguration = new EndpointConfiguration(Endpoints.Orders.Name);
+                var thisEndpoint = Endpoints.Invoicing;
+                var endpointConfiguration = new EndpointConfiguration(thisEndpoint.Name);
                 endpointConfiguration.EnableInstallers();
                 endpointConfiguration.SendFailedMessagesTo("error");
                 endpointConfiguration.EnableOutbox();
@@ -40,13 +39,14 @@ internal class Program
                 // Configure Transport
                 var transportConnectionString = hostBuilderContext.Configuration.GetConnectionString("Transport");
                 SqlHelper.EnsureDatabaseExists(transportConnectionString);
-                SqlHelper.CreateSchema(transportConnectionString, Endpoints.Orders.Schema);
+                SqlHelper.CreateSchema(transportConnectionString, thisEndpoint.Schema);
 
                 var transport = new SqlServerTransport(transportConnectionString)
                 {
-                    DefaultSchema = Endpoints.Orders.Schema,
+                    DefaultSchema = thisEndpoint.Schema,
                     TransportTransactionMode = TransportTransactionMode.ReceiveOnly
                 };
+
                 transport.SchemaAndCatalog.UseSchemaForQueue("error", "dbo");
                 transport.SchemaAndCatalog.UseSchemaForQueue("audit", "dbo");
 
@@ -60,17 +60,15 @@ internal class Program
                 // Configure Persistence
                 var persistenceConnectionString = hostBuilderContext.Configuration.GetConnectionString("Persistence");
                 SqlHelper.EnsureDatabaseExists(persistenceConnectionString);
-                SqlHelper.CreateSchema(persistenceConnectionString, Endpoints.Orders.Schema);
+                SqlHelper.CreateSchema(persistenceConnectionString, thisEndpoint.Schema);
 
                 var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
                 persistence.ConnectionBuilder(() => new SqlConnection(persistenceConnectionString));
 
                 var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
-                dialect.Schema(Endpoints.Orders.Schema);
+                dialect.Schema(thisEndpoint.Schema);
                 persistence.TablePrefix("");
 
                 return endpointConfiguration;
             });
-
-
 }
