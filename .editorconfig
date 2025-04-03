@@ -464,7 +464,7 @@ dotnet_naming_symbols.types_and_namespaces_symbols.applicable_kinds             
 
 # Constant fields should be PascalCase
 dotnet_naming_rule.constant_fields_rule.symbols  = constant_fields_symbols
-dotnet_naming_rule.constant_fields_rule.style    = pascal_case_style
+dotnet_naming_rule.constant_fields_rule.style    = pascal_case_style, all_upper
 dotnet_naming_rule.constant_fields_rule.severity = suggestion
 
 # Internal and private fields should be _camelCase

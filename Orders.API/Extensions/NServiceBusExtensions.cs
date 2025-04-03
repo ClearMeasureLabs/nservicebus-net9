@@ -1,7 +1,5 @@
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using NServiceBus;
+using Microsoft.EntityFrameworkCore;
 using NServiceBus.Transport.SqlServer;
 using Shared;
 

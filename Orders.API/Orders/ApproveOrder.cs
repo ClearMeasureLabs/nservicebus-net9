@@ -7,17 +7,17 @@ namespace Orders.API.Orders;
 
 public static class ApproveOrder
 {
-    public class Request
+    public class ApiRequest
     {
         public required string ApprovedBy { get; set; }
     }
 
-    public class Endpoint : ICarterModule
+    public class ApiEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app) =>
             app.MapPost("/orders/{orderNumber}/approve", Handle);
 
-        private static async Task<IResult> Handle(string orderNumber, Request request, AppDbContext dbContext, IMessageSession messageSession)
+        private static async Task<IResult> Handle(string orderNumber, ApiRequest apiRequest, AppDbContext dbContext, IMessageSession messageSession)
         {
             if (!await dbContext.Orders.AnyAsync(o => o.OrderNumber == orderNumber))
             {
@@ -27,13 +27,13 @@ public static class ApproveOrder
             var command = new Command
             {
                 OrderNumber = orderNumber,
-                ApprovedBy = request.ApprovedBy
+                ApprovedBy = apiRequest.ApprovedBy
             };
 
             await messageSession.SendLocal(command);
 
             return Results.AcceptedAtRoute(
-                GetOrderByOrderNumber.Endpoint.Name,
+                GetOrderByOrderNumber.ApiEndpoint.Name,
                 new { orderNumber },
                 new { message = "Order approval received and is being processed." });
         }
@@ -45,12 +45,12 @@ public static class ApproveOrder
         public required string ApprovedBy { get; set; }
     }
 
-    public class Handler : IHandleMessages<Command>
+    public class CommandHandler : IHandleMessages<Command>
     {
         private readonly AppDbContext _dbContext;
         private readonly ILogger<Command> _logger;
 
-        public Handler(AppDbContext dbContext, ILogger<Command> logger)
+        public CommandHandler(AppDbContext dbContext, ILogger<Command> logger)
         {
             _dbContext = dbContext;
             _logger = logger;
@@ -58,7 +58,7 @@ public static class ApproveOrder
 
         public async Task Handle(Command message, IMessageHandlerContext context)
         {
-            _logger.LogInformation("Creating Order {OrderNumber} in database with Status = Submitted.", message.OrderNumber);
+            _logger.LogInformation("Approving Order {OrderNumber}.", message.OrderNumber);
 
             var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderNumber == message.OrderNumber, context.CancellationToken);
 
@@ -67,24 +67,23 @@ public static class ApproveOrder
                 throw new Exception($"Order {message.OrderNumber} not found.");
             }
 
-            if (order.Status == "Approved")
+            switch (order.Status)
             {
-                return;
+                case "Approved":
+                    _logger.LogInformation("Order {OrderNumber} is already approved", order.OrderNumber);
+                    return;
+                case "Expired":
+                    _logger.LogWarning("Order {OrderNumber} has expired and cannot be approved", order.OrderNumber);
+                    return;
+                case "Submitted":
+                    order.Status = "Approved";
+                    await _dbContext.SaveChangesAsync(context.CancellationToken);
+                    await context.Publish(new OrderApproved
+                    {
+                        OrderNumber = message.OrderNumber
+                    });
+                    return;
             }
-
-            if (order.Status != "Submitted")
-            {
-                throw new Exception($"Order {message.OrderNumber} is not in Submitted status.");
-            }
-
-            order.Status = "Approved";
-
-            await _dbContext.SaveChangesAsync(context.CancellationToken);
-
-            await context.Publish(new OrderApproved
-            {
-                OrderNumber = message.OrderNumber
-            });
         }
     }
 }

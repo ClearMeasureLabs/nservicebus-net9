@@ -7,9 +7,8 @@ public static class MigrationExtensions
 {
     public static async Task MigrateDatabase(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
-        var services = scope.ServiceProvider;
-        var context = services.GetRequiredService<AppDbContext>();
-        await context.Database.MigrateAsync();
+        var dbContextFactory = new MigrationsDbContextFactory();
+        var dbContext = dbContextFactory.CreateDbContext([]);
+        await dbContext.Database.MigrateAsync();
     }
 }

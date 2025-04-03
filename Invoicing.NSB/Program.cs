@@ -1,7 +1,7 @@
 using System;
+using Invoicing.NSB.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Orders.API.Extensions;
 
 Console.Title = AppDomain.CurrentDomain.FriendlyName;
 Console.WriteLine($"{AppDomain.CurrentDomain.FriendlyName} started.");

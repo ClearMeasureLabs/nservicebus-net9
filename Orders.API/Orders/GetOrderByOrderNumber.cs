@@ -6,7 +6,7 @@ namespace Orders.API.Orders;
 
 public static class GetOrderByOrderNumber
 {
-    public class Response
+    public class ApiResponse
     {
         public required string OrderNumber { get; set; }
         public required string ProductCode { get; set; }
@@ -15,7 +15,7 @@ public static class GetOrderByOrderNumber
         public required string VendorName { get; set; }
     }
 
-    public class Endpoint : ICarterModule
+    public class ApiEndpoint : ICarterModule
     {
         public const string Name = nameof(GetOrderByOrderNumber);
 
@@ -28,7 +28,7 @@ public static class GetOrderByOrderNumber
             var order = await dbContext.Orders.FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
             return order is null
                 ? Results.NotFound()
-                : Results.Ok(new Response
+                : Results.Ok(new ApiResponse
                 {
                     OrderNumber = order.OrderNumber,
                     ProductCode = order.ProductCode,

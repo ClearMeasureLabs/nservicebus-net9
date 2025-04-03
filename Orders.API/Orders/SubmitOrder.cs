@@ -8,7 +8,7 @@ namespace Orders.API.Orders;
 
 public static class SubmitOrder
 {
-    public class Request
+    public class ApiRequest
     {
         public required string OrderNumber { get; set; }
         public required string ProductCode { get; set; }
@@ -16,29 +16,32 @@ public static class SubmitOrder
         public required string VendorName { set; get; }
     }
 
-    public class Endpoint : ICarterModule
+    public class ApiEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app) =>
             app.MapPost("/orders", Handle);
 
-        private static async Task<IResult> Handle(Request request, AppDbContext dbContext, IMessageSession messageSession)
+        private static async Task<IResult> Handle(ApiRequest apiRequest, AppDbContext dbContext, IMessageSession messageSession)
         {
-            if (await dbContext.Orders.AnyAsync(o => o.OrderNumber == request.OrderNumber))
+            if (await dbContext.Orders.AnyAsync(o => o.OrderNumber == apiRequest.OrderNumber))
             {
                 return Results.Conflict();
             }
 
             var message = new Command
             {
-                OrderNumber = request.OrderNumber,
-                ProductCode = request.ProductCode,
-                Quantity = request.Quantity,
-                VendorName = request.VendorName
+                OrderNumber = apiRequest.OrderNumber,
+                ProductCode = apiRequest.ProductCode,
+                Quantity = apiRequest.Quantity,
+                VendorName = apiRequest.VendorName
             };
 
             await messageSession.SendLocal(message);
 
-            return Results.AcceptedAtRoute(nameof(GetOrderByOrderNumber), new { orderNumber = request.OrderNumber }, new { message = "Order received and is being processed." });
+            return Results.AcceptedAtRoute(
+                GetOrderByOrderNumber.ApiEndpoint.Name,
+                new { orderNumber = apiRequest.OrderNumber },
+                new { message = "Order received and is being processed." });
         }
     }
 
@@ -50,12 +53,12 @@ public static class SubmitOrder
         public required string VendorName { set; get; }
     }
 
-    public class Handler : IHandleMessages<Command>
+    public class CommandHandler : IHandleMessages<Command>
     {
         private readonly AppDbContext _dbContext;
         private readonly ILogger<Command> _logger;
 
-        public Handler(AppDbContext dbContext, ILogger<Command> logger)
+        public CommandHandler(AppDbContext dbContext, ILogger<Command> logger)
         {
             _dbContext = dbContext;
             _logger = logger;

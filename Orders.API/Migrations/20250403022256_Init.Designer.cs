@@ -12,7 +12,7 @@ using Orders.API.Database;
 namespace Orders.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250402192556_Init")]
+    [Migration("20250403022256_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -20,6 +20,7 @@ namespace Orders.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("orders")
                 .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -33,7 +34,7 @@ namespace Orders.API.Migrations
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProductCode")
                         .IsRequired()
@@ -52,7 +53,10 @@ namespace Orders.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders");
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.ToTable("Orders", "orders");
                 });
 #pragma warning restore 612, 618
         }
