@@ -1,4 +1,4 @@
-﻿namespace Messages;
+﻿namespace Shared.Messages;
 
 public class OrderApproved : IEvent
 {
