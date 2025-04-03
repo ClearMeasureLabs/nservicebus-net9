@@ -17,8 +17,10 @@ public static class ApproveOrder
         public void AddRoutes(IEndpointRouteBuilder app) =>
             app.MapPost("/orders/{orderNumber}/approve", Handle);
 
-        private static async Task<IResult> Handle(string orderNumber, ApiRequest apiRequest, AppDbContext dbContext, IMessageSession messageSession)
+        private static async Task<IResult> Handle(string orderNumber, ApiRequest apiRequest, AppDbContext dbContext, IMessageSession messageSession, ILogger<ApiEndpoint> logger)
         {
+            logger.LogInformation("Order {OrderNumber} approval request received.", orderNumber);
+
             if (!await dbContext.Orders.AnyAsync(o => o.OrderNumber == orderNumber))
             {
                 return Results.NotFound();

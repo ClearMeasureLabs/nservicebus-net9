@@ -53,6 +53,10 @@ public static class NServiceBusExtensions
         dialect.Schema(schema);
         persistence.TablePrefix("");
 
+        endpointConfiguration.Recoverability()
+            .Immediate(s => s.NumberOfRetries(1))
+            .Delayed(s => s.NumberOfRetries(2).TimeIncrease(TimeSpan.FromSeconds(5)));
+
         builder.UseNServiceBus(endpointConfiguration);
     }
 }
