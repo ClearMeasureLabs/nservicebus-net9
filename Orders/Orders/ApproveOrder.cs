@@ -12,6 +12,12 @@ public static class ApproveOrder
         public required string ApprovedBy { get; set; }
     }
 
+    public class ApiResponse
+    {
+        public required string Message { get; set; }
+        public required object OrderNumber { get; set; }
+    }
+
     public class ApiEndpoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app) =>
@@ -37,7 +43,11 @@ public static class ApproveOrder
             return Results.AcceptedAtRoute(
                 GetOrderByOrderNumber.ApiEndpoint.Name,
                 new { orderNumber },
-                new { message = "Order approval received and is being processed." });
+                new ApiResponse
+                {
+                    Message = "Order approval received and is being processed.",
+                    OrderNumber = orderNumber
+                });
         }
     }
 

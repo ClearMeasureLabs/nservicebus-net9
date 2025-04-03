@@ -1,0 +1,42 @@
+@API_HostAddress = http://localhost:5208
+
+// Step 1 - Submit an order
+// This will return a 202 Accepted with a Location header pointing to the GET Order endpoint (see next)
+// @name SubmitOrder
+POST {{API_HostAddress}}/orders
+Content-Type: application/json
+
+{
+  "orderNumber":"ORD-{{$randomInt}}",
+  "productCode":"Product-1",
+  "quantity":5,
+  "vendorName":"Cool Stuff Inc."
+}
+
+###
+
+// Step 2 - Get order by OrderNumber using the Location header from the previous response
+// If you hit this endpoint before the order is submitted, it will return a 404
+// Keep hitting it until you get a 200 and note the Order Status is Submitted
+// @name GetSubmittedOrder
+GET {{SubmitOrder.response.headers.Location}}
+
+###
+
+// Step 3 - Approve the order
+// This will return a 202 Accepted with a Location header pointing to the GET Order endpoint (see next)
+// @name ApproveOrder
+POST {{SubmitOrder.response.headers.Location}}/approve
+Content-Type: application/json
+
+{
+    "approvedBy":"Mike Sigsworth"
+}
+
+###
+
+// Step 2 - Get order by OrderNumber
+// @name GetSubmittedOrder
+GET {{ApproveOrder.response.headers.Location}}
+
+###

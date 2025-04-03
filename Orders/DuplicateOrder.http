@@ -1,0 +1,41 @@
+@API_HostAddress = http://localhost:5208
+@OrderNumber = ORD-{{$randomInt}}
+
+// Step 1 - Submit an order
+// @name SubmitOrder
+POST {{API_HostAddress}}/orders
+Content-Type: application/json
+
+{
+  "orderNumber":"{{OrderNumber}}",
+  "productCode":"Product-1",
+  "quantity":5,
+  "vendorName":"Cool Stuff Inc."
+}
+
+###
+
+// Step 2 - Submit a duplicate SubmitOrder request
+// If you run this within 5 seconds of the original request the API will not detect it as a duplicate.
+// However, if you wait longer the command is handled and creates the Order, so the API will see it as a duplicate.
+// This deomonstrates a race condition you may encounter due to network latency. Always validate in the API and again in the Command Handler.
+// Hint: Watch the logs to see the NServiceBus retries kick in.
+// @name DuplicateOrder
+POST {{API_HostAddress}}/orders
+Content-Type: application/json
+
+{
+  "orderNumber":"{{SubmitOrder.response.body.$.orderNumber}}",
+  "productCode":"Product-1",
+  "quantity":5,
+  "vendorName":"Cool Stuff Inc."
+}
+
+###
+
+// Step 3 - Get the order by OrderNumber
+// The first order submission will still work just fine and you can get it with this request.
+// @name GetSubmittedOrder
+GET {{SubmitOrder.response.headers.Location}}
+
+###
