@@ -51,7 +51,7 @@ public static class NServiceBusExtensions
 
         var dialect = persistence.SqlDialect<SqlDialect.MsSqlServer>();
         dialect.Schema(schema);
-        persistence.TablePrefix("");
+        persistence.TablePrefix("Nsb_");
 
         endpointConfiguration.Recoverability()
             .Immediate(s => s.NumberOfRetries(0))
