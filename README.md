@@ -2,12 +2,13 @@
 
 ## Vertical Slice Architecture
 
-This solution uses the Vertical Slice architecture, where each feature is implemented end-to-end, encapsulating all necessary components, in a single file (using a single folder is another option). This approach contrasts with traditional layered architecture by focusing on delivering complete features rather than separating concerns into distinct layers.
+This solution uses the Vertical Slice Architecture, where each feature is implemented end-to-end, encapsulating all necessary components, in a single file, or you can use  folders if things get to unwieldy. This approach contrasts with traditional layered architecture or Clean Architecture by focusing on delivering complete features rather than separating concerns into distinct layers.
 
-In this solution:
+Patterns in this solution:
 
-- `ApiEndpoint` classes using HTTP requests, perform validation, and send commands to NServiceBus for asynchronous processing. Minimal APIs are used, along with the fantastic [Carter](https://github.com/CarterCommunity/Carter) library for endpoint discovery.
-- `CommandHandler` classes are NServiceBus handlers procesing the various messages dispatched by API endpoints and the `OrderExpirySaga`.
+- Each set of classes comprising a feature are nested inside a static class, giving them a dot notation of `Feature.Component`.
+- `ApiEndpoint` classes handle HTTP requests, perform validation, and send commands to NServiceBus for asynchronous processing. Minimal APIs are used, along with the [Carter](https://github.com/CarterCommunity/Carter) library for endpoint discovery.
+- `CommandHandler` classes are [NServiceBus](https://docs.particular.net/nservicebus/) handlers that process the various commands sent by API endpoints and events published by the `OrderExpirySaga`.
 - `OrderExpirySaga` manages the lifecycle of the order, ensuring it is either approved or marked as expired within a specified timeframe.
 
 Each vertical slice, such as submitting an order or handling order expiry, is self-contained, promoting better maintainability, scalability, and a clear separation of concerns. This architecture allows developers to focus on individual features, making the codebase easier to understand and modify.
