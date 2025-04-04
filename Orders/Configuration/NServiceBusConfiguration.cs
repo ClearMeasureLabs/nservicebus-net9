@@ -1,10 +1,11 @@
 using Microsoft.Data.SqlClient;
 using NServiceBus.Transport.SqlServer;
+using Orders.Configuration;
 using Shared;
 
-namespace Orders.Extensions;
+namespace Orders.Configuration;
 
-public static class NServiceBusExtensions
+public static class NServiceBusConfiguration
 {
     public static void UseNServiceBus(this IHostApplicationBuilder builder, string endpointName, string schema = "dbo", bool isSendOnly = false)
     {

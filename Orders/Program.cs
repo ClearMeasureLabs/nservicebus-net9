@@ -1,8 +1,8 @@
 using Carter;
 using Microsoft.EntityFrameworkCore;
 using NServiceBus.Persistence.Sql;
+using Orders.Configuration;
 using Orders.Database;
-using Orders.Extensions;
 
 Console.Title = AppDomain.CurrentDomain.FriendlyName;
 Console.WriteLine($"{AppDomain.CurrentDomain.FriendlyName} started.");
