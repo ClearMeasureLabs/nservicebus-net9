@@ -94,6 +94,7 @@ public static class ApproveOrder
                     {
                         OrderNumber = message.OrderNumber
                     });
+                    _logger.LogInformation("Order {OrderNumber} status updated to Approved and OrderApproved event published.", order.OrderNumber);
                     return;
             }
         }

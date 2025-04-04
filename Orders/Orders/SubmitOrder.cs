@@ -82,10 +82,7 @@ public static class SubmitOrder
             _logger.LogInformation("Handling command to submit order {OrderNumber}.", message.OrderNumber);
             if (context.MessageHeaders.TryGetValue(Headers.DelayedRetries, out var delayedRetries))
             {
-                var immediateRetries = context.MessageHeaders[Headers.ImmediateRetries];
-
-                _logger.LogWarning("Delayed retries: {DelayedRetries}. Immediate retries: {ImmediateRetries}.",
-                    delayedRetries, immediateRetries);
+                _logger.LogWarning("Delayed retry attempt # {DelayedRetries} for {OrderNumber}", delayedRetries, message.OrderNumber);
             }
             else
             {
@@ -104,12 +101,22 @@ public static class SubmitOrder
                 Status = "Submitted"
             });
 
-            await _dbContext.SaveChangesAsync(context.CancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(context.CancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "An error occurred saving order {OrderNumber} to the db.", message.OrderNumber);
+                throw;
+            }
 
             await context.Publish(new OrderSubmitted
             {
                 OrderNumber = message.OrderNumber
             });
+
+            _logger.LogInformation("Order {OrderNumber} saved to db and OrderSubmitted event published.", message.OrderNumber);
         }
     }
 }

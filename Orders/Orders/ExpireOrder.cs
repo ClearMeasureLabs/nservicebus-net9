@@ -48,6 +48,7 @@ public static class ExpireOrder
                     {
                         OrderNumber = message.OrderNumber
                     });
+                    _logger.LogInformation("Order {OrderNumber} status updated to Expired and OrderExpired event published.", order.OrderNumber);
                     return;
             }
         }

@@ -54,7 +54,7 @@ public static class NServiceBusExtensions
         persistence.TablePrefix("");
 
         endpointConfiguration.Recoverability()
-            .Immediate(s => s.NumberOfRetries(1))
+            .Immediate(s => s.NumberOfRetries(0))
             .Delayed(s => s.NumberOfRetries(2).TimeIncrease(TimeSpan.FromSeconds(5)));
 
         builder.UseNServiceBus(endpointConfiguration);
