@@ -1,0 +1,45 @@
+@startuml
+
+scale 2/3
+'left to right direction
+center header
+    C4 Architecture: NServiceBus Demo
+endheader
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+title Distributed System Architecture - NServiceBus Demo
+
+
+
+System_Ext(otherSystem, "E-Commerce Application")
+
+Container_Boundary(orders, "Ordering System") {
+    Component(ordersApi, "Orders API Endpoint", "HTTPS")
+    Component(ordersHandler, "Orders command handler", "Async")
+
+    ContainerDb(database, "OLTP Database", "SQL Database")
+    ContainerDb(orderQueue, "Queues", "Queuing Transport")
+}
+
+Container_Boundary(invoicing, "Invoicing System") {
+    Component(ordersEventHandler, "Orders events handler", "Async")
+
+    ContainerDb(invoicingDb, "OLTP Database", "SQL Database")
+    ContainerDb(invoicingQueue, "Queues", "Queuing Transport")
+}
+
+Rel(ordersApi, orderQueue, "(3) Order Command sent to queue")
+Rel(ordersHandler, orderQueue, "(1) Listens for order command")
+Rel(ordersHandler, database, "(4) Records order in OLTP database")
+Rel(ordersHandler, invoicingQueue, "(5) Publishes order submitted event")s
+
+Rel(otherSystem, ordersApi, "(2) Web API call")
+Rel(ordersEventHandler, invoicingQueue, "Listens for order event")
+Rel(ordersEventHandler, invoicingDb, "Writes to database")
+
+
+center footer
+    Distributed Application Architecture with NServiceBus
+endfooter
+@enduml
